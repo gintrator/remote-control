@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>Remote Control | {{ hostname }}</title>
-  
+
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
@@ -10,8 +10,16 @@
       font-family: Sans-Serif;
     }
 
-    fieldset {
-      float: block;
+    body {
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1em;
+      padding-right: 1em;
+    }
+
+    td {
+      padding-right: 5px;
     }
   </style>
 
@@ -27,19 +35,19 @@
       const data = await response.json();
       return data['volume'];
     }
-    
+
     async function setVolume(value) {
       await fetch(volumeURL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',            
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           volume: value,
         }),
       });
     }
-    
+
     async function getMute() {
       const response = await fetch(muteURL);
       if (!response.ok) {
@@ -48,12 +56,12 @@
       const data = await response.json();
       return data['mute'];
     }
-    
+
     async function setMute(value) {
       await fetch(muteURL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',            
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           mute: value,
@@ -64,7 +72,7 @@
   function init() {
     const syncButton = document.getElementById('sync-button');
     syncButton.addEventListener('click', syncUI);
-    
+
     const volumeSlider = document.getElementById('volume-slider');
     const volumeValue = document.getElementById('volume-value');
 
@@ -72,13 +80,13 @@
     volumeSlider.addEventListener('input', function() {
       volumeValue.innerHTML = volumeSlider.value;
     });
-    
+
     // Submit volume set on slider to remote
     volumeSlider.addEventListener('change', function() {
       setVolume(volumeSlider.value)
         .catch(error => console.log(error));
     });
-    
+
     const muteToggle = document.getElementById('mute-toggle');
 
     muteToggle.addEventListener('change', function() {
@@ -86,23 +94,36 @@
         .catch(error => console.log(error));
     });
 
-
     document.addEventListener('keyup', event => {
-      if (event.code === 'Space') {
+      if (event.code == 'Space') {
         muteToggle.checked = !muteToggle.checked;
         setMute(muteToggle.checked)
           .catch(error => console.log(error));
       }
+
+      if (event.code == 'Equal') {
+        volumeSlider.stepUp(5);
+        volumeValue.innerHTML = volumeSlider.value;
+        setVolume(volumeSlider.value)
+          .catch(error => console.log(error));
+      }
+
+      if (event.code == 'Minus') {
+        volumeSlider.stepDown(5);
+        volumeValue.innerHTML = volumeSlider.value;
+        setVolume(volumeSlider.value)
+          .catch(error => console.log(error));
+      }
     });
-    
+
     function syncUI() {
-      getVolume() 
+      getVolume()
         .then((value) => {
           volumeSlider.value = value;
           volumeValue.innerHTML = value;
         })
         .catch(error => console.log(error));
-      getMute() 
+      getMute()
         .then((value) => {
           muteToggle.checked = value;
         })
@@ -118,33 +139,73 @@
 <body>
   <h1>Remote Control</h1>
   <hr>
-  <h2>Audio</h2>
+
+  <br>
 
   <form>
     <fieldset>
-      <legend>State</legend>
-      <input type="button" value="Sync" id="sync-button" name="sync" />
-      <label for="sync-button">Remote state may change if there are multiple clients.</label>
+      <legend><b>Info</b></legend>
+      <table>
+        <tr>
+          <td>Hostname</td>
+          <td><b><tt>{{ hostname }}</tt></b></td>
+        </tr>
+        <tr>
+          <td>System</td>
+          <td><b><tt>{{ system }}</tt></b></td>
+        </tr>
+      </table>
     </fieldset>
+
+    <br>
+
     <fieldset>
-      <legend>Volume</legend>
-      <input type="range" min="0" max="100" value="0" name="volume-slider" id="volume-slider" />
-      <label for="volume-slider"><tt id="volume-value">0</tt></label>
+      <legend><b>Audio</b></legend>
+      <table>
+        <tr>
+          <td><label for="mute-toggle">Mute</label></td>
+          <td><input type="checkbox" id="mute-toggle" name="mute-toggle" /></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><label for="volume-slider">Volume</label></td>
+          <td><input type="range" min="0" max="100" value="0" name="volume-slider" id="volume-slider" /></td>
+          <td><tt>(</tt><tt id="volume-value">0</tt><tt>)</tt></td>
+        </tr>
+      </table>
     </fieldset>
+
+    <br>
+
     <fieldset>
-      <legend>Mute</legend>
-      <input type="checkbox" id="mute-toggle" name="mute-toggle" />
-      <label for="mute-toggle">Press <tt>&lt;Space&gt;</tt> to toggle.</label>
+      <legend><b>State</b></legend>
+      <table>
+        <tr>
+          <td><label for="sync-button">Sync</label></td>
+          <td><input type="button" value="Sync" id="sync-button" name="sync" title="Manually sync from remote state"/></td>
+          <td></td>
+        </tr>
+      </table>
     </fieldset>
   </form>
+
   <br>
   <hr>
-  
-  <h2>Info</h2>
+  <br>
+
   <form>
     <fieldset>
-      <legend>Hostname</legend>
-      <b><tt>{{ hostname }}</tt> </b>
+      <legend><b>Shortcuts</b></legend>
+      <table>
+        <tr>
+          <td><tt>&lt;space&gt;</tt></td>
+          <td>Toggle mute</td>
+        </tr>
+        <tr>
+          <td><tt>&lt;+/-&gt;</tt></td>
+          <td>Increase or decrease volume</td>
+        </tr>
+      </table>
     </fieldset>
   </form>
 </body>

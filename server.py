@@ -1,4 +1,5 @@
 import os
+import platform
 import socket
 import subprocess
 
@@ -54,7 +55,12 @@ def handle_mute():
 
 @app.route('/')
 def handle_index():
-    return render_template('index.html', hostname=socket.gethostname())
+    kwargs = dict(
+       hostname=socket.gethostname(),
+       system=platform.platform(terse=True).split('-')[0], # Omit version information, e.g. "macOS-<version>" -> "macOS"
+    )
+
+    return render_template('index.html', **kwargs)
 
 def main():
     set_volume(33)
